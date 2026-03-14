@@ -1,0 +1,8 @@
+mediapipe
+opencv-python
+numpy
+torch
+onnxruntime
+fastapi
+uvicorn[standard]
+pydantic
