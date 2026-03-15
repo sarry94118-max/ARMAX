@@ -1,35 +1,45 @@
 """
-Gesture API Server
-Runs the gesture detection loop in a background thread and exposes the latest result via REST.
+FastAPI Gesture Service
+Runs webcam + detection + classification in a background thread.
+Exposes GET /gesture.
 """
 
 import threading
+import cv2
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-import sys
-import os
+import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from ai_engine.inference.gesture_detector import run_detector
+from ai_engine.gesture_detector import detect_hand
+from ai_engine.gesture_classifier import classify_gesture
 
-app = FastAPI(title="OpenGestureXR API")
+app = FastAPI(title="ARMAX Gesture API")
 
-# Shared state
-_latest: dict = {"gesture": "none", "confidence": 0.0}
+_state = {"gesture": "none", "confidence": 0.0}
 _lock = threading.Lock()
 
 
-def _update(result: dict):
-    with _lock:
-        _latest.update(result)
+def _detection_loop():
+    cap = cv2.VideoCapture(0)
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        result = detect_hand(frame)
+        if result["hand_detected"]:
+            classified = classify_gesture(result["landmarks"])
+        else:
+            classified = {"gesture": "none", "confidence": 0.0}
+        with _lock:
+            _state.update(classified)
+    cap.release()
 
 
-# Start detector in background thread on startup
 @app.on_event("startup")
-def start_detector():
-    t = threading.Thread(target=run_detector, args=(_update,), daemon=True)
-    t.start()
+def startup():
+    threading.Thread(target=_detection_loop, daemon=True).start()
 
 
 class GestureResponse(BaseModel):
@@ -39,6 +49,5 @@ class GestureResponse(BaseModel):
 
 @app.get("/gesture", response_model=GestureResponse)
 def get_gesture():
-    """Return the latest detected gesture."""
     with _lock:
-        return GestureResponse(**_latest)
+        return GestureResponse(**_state)
