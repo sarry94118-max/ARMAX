@@ -1,49 +1,44 @@
 # Architecture
 
-## System Components
-
-### AI Engine (`ai_engine/`)
-Python module that opens the webcam, runs MediaPipe hand landmark detection, and classifies gestures using a rule-based classifier. Outputs a gesture name and confidence score.
-
-### Gesture API (`gesture_api/`)
-FastAPI server that runs the AI engine in a background thread and exposes the latest gesture result over HTTP. Unity polls this endpoint.
-
-### Unity XR Client (`unity_plugin/`)
-C# scripts that poll the Gesture API and map gesture events to XR object interactions using Unity's transform system and OpenXR.
-
----
-
-## ASCII Architecture Diagram
+## System Diagram
 
 ```
 Webcam
-   │
-   ▼
-Gesture Detector (Python / MediaPipe)
-   │  ai_engine/inference/gesture_detector.py
-   ▼
+  ↓
+MediaPipe Hand Tracking
+  ↓
+Gesture Classifier
+  ↓
 FastAPI Gesture Server
-   │  gesture_api/server/main.py
-   │  GET /gesture → {"gesture": "grab", "confidence": 0.91}
-   │
-HTTP JSON (polling ~20 Hz)
-   │
-   ▼
+  ↓  HTTP JSON  GET /gesture
 Unity XR Client
-   │  GestureClient.cs  →  OnGestureReceived event
-   ▼
-ObjectInteractor.cs
-   │
-   ▼
-Virtual Object Interaction (grab / release / select / highlight)
+  ↓
+XR Object Interaction
 ```
+
+## Modules
+
+### `ai_engine/gesture_detector.py`
+Opens the webcam, runs MediaPipe Hands, and returns 21 normalized landmark coordinates per frame. Target latency: < 30ms per frame.
+
+### `ai_engine/gesture_classifier.py`
+Applies geometric rules to the 21 landmarks to classify one of four gestures: `open_hand`, `grab`, `pinch`, `point`. Returns gesture name and confidence score.
+
+### `gesture_api/server/main.py`
+FastAPI server that runs the detector + classifier in a background thread and exposes the latest result at `GET /gesture`. Stateless — Unity polls at 500ms intervals.
+
+### `unity_plugin/Scripts/GestureClient.cs`
+Polls `GET /gesture` every 500ms, parses the JSON response, and fires the static `OnGestureReceived` event.
+
+### `unity_plugin/Scripts/ObjectInteractor.cs`
+Subscribes to `OnGestureReceived` and maps gestures to object actions: grab attaches the object to the hand anchor, open_hand releases it, pinch selects, point highlights.
 
 ---
 
 ## Future Extensions
 
-- **Deep learning model** — replace rule-based classifier with a trained ONNX model
+- **Deep learning model** — swap rule-based classifier for a trained ONNX model
 - **Multi-hand tracking** — extend MediaPipe config and API schema
 - **OpenXR native plugin** — replace HTTP polling with a native XR extension
-- **Cloud inference** — offload model inference to a cloud endpoint for mobile/AR devices
-- **AR device support** — integrate with ARCore / ARKit hand tracking APIs
+- **Cloud inference** — offload model to a cloud endpoint for mobile/AR devices
+- **AR device support** — integrate ARCore / ARKit hand tracking APIs

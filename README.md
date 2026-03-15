@@ -1,51 +1,64 @@
 # OpenGestureXR
 
-Open-source prototype SDK for AI-based hand gesture recognition in XR (AR/VR) applications.
+Open-source prototype SDK for AI-powered hand gesture interaction in XR (AR/VR) applications.
 
-## Features
+## Project Overview
 
-- Real-time hand gesture detection via MediaPipe (< 30ms per frame target)
-- Rule-based gesture classifier: `open_hand`, `grab`, `pinch`, `point`
-- FastAPI server exposing gesture state over HTTP
-- Unity XR client that maps gestures to virtual object interactions (OpenXR)
+OpenGestureXR connects a webcam-based hand gesture recognizer to a Unity XR scene. Gestures detected in real time are streamed via a FastAPI server and consumed by a Unity client to drive virtual object interactions.
+
+## Architecture
+
+```
+Webcam
+  ↓
+MediaPipe Hand Tracking  (ai_engine/gesture_detector.py)
+  ↓
+Gesture Classifier       (ai_engine/gesture_classifier.py)
+  ↓
+FastAPI Gesture Server   (gesture_api/server/main.py)
+  ↓  GET /gesture — HTTP JSON polling
+Unity XR Client          (GestureClient.cs)
+  ↓
+XR Object Interaction    (ObjectInteractor.cs)
+```
 
 ## Installation
 
 ```bash
-git clone https://github.com/example/OpenGestureXR
-cd OpenGestureXR
-pip install -r requirements.txt
+git clone https://github.com/sarry94118-max/ARMAX.git
+cd ARMAX
+pip install -r ai_engine/requirements.txt
 ```
 
 ## Quick Start
 
-### 1. Start the gesture server
-
 ```bash
-uvicorn gesture_api.server.main:app --reload
-```
+# 1. Start the gesture API server
+cd gesture_api
+uvicorn server.main:app --reload
 
-### 2. Verify the API
-
-```bash
+# 2. Verify
 curl http://localhost:8000/gesture
 # {"gesture":"open_hand","confidence":0.92}
 ```
 
-### 3. Open Unity demo
+Then open the Unity demo project and press **Play**.
 
-Follow the setup steps in `demo/unity_scene_description.md` to configure the Unity scene, then press **Play**.
+## Unity Demo
 
-## Documentation
+See [`demo/unity_scene_description.md`](demo/unity_scene_description.md) for full scene setup.
 
-- [Architecture](docs/architecture.md)
-- [Developer Guide](docs/developer_guide.md)
-- [Demo Scene](demo/unity_scene_description.md)
+| Gesture      | Action                  |
+|--------------|-------------------------|
+| `grab`       | Move cube with hand     |
+| `open_hand`  | Release cube            |
+| `pinch`      | Select sphere           |
+| `point`      | Highlight sphere        |
 
-## Tech Stack
+## Future Work
 
-| Layer       | Technology                          |
-|-------------|-------------------------------------|
-| AI Engine   | Python 3.10, MediaPipe, OpenCV      |
-| API Server  | FastAPI, Uvicorn                    |
-| XR Client   | Unity 2022 LTS, C#, OpenXR         |
+- Deep learning ONNX gesture model
+- Multi-hand tracking
+- OpenXR native plugin (replace HTTP polling)
+- Cloud inference support
+- ARCore / ARKit integration

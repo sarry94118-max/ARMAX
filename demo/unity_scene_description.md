@@ -1,28 +1,26 @@
-# Unity Demo Scene — Description
+# Unity Demo Scene
 
-## Scene Contents
+## Scene Objects
 
-| Object       | Type        | Position       |
-|--------------|-------------|----------------|
-| XR Camera    | XR Rig      | (0, 1.6, 0)    |
-| Cube         | Mesh        | (0.3, 1.0, 1.5)|
-| Sphere       | Mesh        | (-0.3, 1.0, 1.5)|
+| Object    | Type     | Position        |
+|-----------|----------|-----------------|
+| XR Camera | XR Rig   | (0, 1.6, 0)     |
+| Cube      | Mesh     | (0.3, 1.0, 1.5) |
+| Sphere    | Mesh     | (-0.3, 1.0, 1.5)|
 
-## Setup Steps
+## Setup
 
-1. Create a new Unity 2022 LTS project with the **XR Interaction Toolkit** package installed.
-2. Add the **OpenXR** plugin via *Edit → Project Settings → XR Plug-in Management*.
-3. Import the `unity_plugin/Scripts/` folder into `Assets/OpenGestureXR/Scripts/`.
-4. Add an empty GameObject named **GestureManager** to the scene and attach `GestureClient.cs`.
-   - Set `handAnchor` to the XR camera's right-hand anchor transform.
-5. Attach `ObjectInteractor.cs` to the **Cube**.
-   - Set `handAnchor` to the same hand anchor.
+1. Create a Unity 2022 LTS project with **XR Interaction Toolkit** and **OpenXR** plugin enabled.
+2. Copy `unity_plugin/Scripts/` into `Assets/OpenGestureXR/Scripts/`.
+3. Add an empty GameObject **GestureManager** → attach `GestureClient.cs`.
+4. Attach `ObjectInteractor.cs` to **Cube** and **Sphere** separately.
+   - Set `handAnchor` on each to the XR camera's right-hand anchor.
 
-## Interactions
+## Gesture Interactions
 
-| Gesture      | Result                        |
-|--------------|-------------------------------|
-| `grab`       | Cube attaches to hand anchor  |
-| `open_hand`  | Cube detaches and stays in place |
-| `pinch`      | Logs "Selected: Cube"         |
-| `point`      | Logs "Highlighted: Cube"      |
+| Gesture      | Object | Action                        |
+|--------------|--------|-------------------------------|
+| `grab`       | Cube   | Cube attaches to hand — moves with hand |
+| `open_hand`  | Cube   | Cube detaches and stays in place        |
+| `pinch`      | Sphere | Sphere is selected                      |
+| `point`      | Sphere | Sphere is highlighted                   |

@@ -6,16 +6,17 @@ using UnityEngine.Networking;
 namespace OpenGestureXR
 {
     /// <summary>
-    /// Polls the Gesture API and exposes the latest gesture via event.
+    /// Polls the Gesture API every 500ms and broadcasts gesture events.
     /// </summary>
     public class GestureClient : MonoBehaviour
     {
-        [Tooltip("Base URL of the Gesture API server")]
+        [Tooltip("Gesture API endpoint")]
         public string apiUrl = "http://localhost:8000/gesture";
 
-        [Tooltip("Polling interval in seconds")]
-        public float pollInterval = 0.05f; // ~20 Hz
+        // Polling interval: 500ms as required
+        private const float PollInterval = 0.5f;
 
+        /// <summary>Fired whenever a gesture response is received.</summary>
         public static event Action<string, float> OnGestureReceived;
 
         [Serializable]
@@ -31,8 +32,8 @@ namespace OpenGestureXR
         {
             while (true)
             {
-                yield return StartCoroutine(FetchGesture());
-                yield return new WaitForSeconds(pollInterval);
+                yield return FetchGesture();
+                yield return new WaitForSeconds(PollInterval);
             }
         }
 
